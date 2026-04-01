@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subcomponente de Lenguas Originarias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --verde-bosque: #2D6A4F;
+      --verde-medio:  #40916C;
+      --verde-claro:  #74C69D;
+      --verde-suave:  #B7E4C7;
+      --verde-palido: #D8F3DC;
+      --crema:        #F8F5EF;
+      --tierra:       #C8A96E;
+      --blanco:       #FFFFFF;
+      --gris-texto:   #3A3A3A;
+      --gris-medio:   #6B7280;
+      --gris-borde:   #E5E7EB;
+      --sombra:       0 4px 24px rgba(45,106,79,0.12);
+      --radio:        14px;
+      --radio-sm:     8px;
+      --t:            0.25s ease;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--gris-texto); min-height: 100vh; overflow-x: hidden; }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100vh; background: var(--verde-bosque); display: flex; flex-direction: column; z-index: 100; transition: transform var(--t); }
+    .sb-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sb-logo .hoja { width: 44px; height: 44px; background: var(--verde-claro); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 12px; }
+    .sb-logo h1 { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; color: var(--blanco); line-height: 1.35; }
+    .sb-logo p  { font-size: 11px; color: var(--verde-suave); margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }
+    .sb-nav { flex: 1; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--verde-suave); padding: 8px 12px 4px; opacity: .7; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--radio-sm); cursor: pointer; transition: background var(--t); color: rgba(255,255,255,.75); font-size: 14px; border: none; background: none; width: 100%; text-align: left; }
+    .nav-item:hover { background: rgba(255,255,255,.12); color: var(--blanco); }
+    .nav-item.activo { background: rgba(116,198,157,.25); color: var(--verde-claro); font-weight: 500; }
+    .nav-item .ni { font-size: 18px; width: 22px; text-align: center; }
+    .sb-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.1); font-size: 11px; color: rgba(255,255,255,.35); text-align: center; }
+
+    /* Estado API en sidebar */
+    .api-status { margin: 0 12px 12px; padding: 8px 12px; border-radius: var(--radio-sm); font-size: 11px; display: flex; align-items: center; gap: 8px; }
+    .api-status.ok   { background: rgba(116,198,157,.2); color: var(--verde-claro); }
+    .api-status.err  { background: rgba(248,113,113,.15); color: #f87171; }
+    .api-status.load { background: rgba(255,255,255,.1); color: rgba(255,255,255,.5); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot.verde { background: var(--verde-claro); }
+    .dot.rojo  { background: #f87171; }
+    .dot.gris  { background: rgba(255,255,255,.3); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+    .pulse { animation: pulse 1.4s infinite; }
+
+    /* MAIN */
+    .main { margin-left: 260px; min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { background: var(--blanco); border-bottom: 1px solid var(--gris-borde); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .topbar-titulo { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--verde-bosque); }
+    .topbar-r { display: flex; align-items: center; gap: 12px; }
+    .topbar-fecha { font-size: 13px; color: var(--gris-medio); }
+    .badge { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .badge-v { background: var(--verde-palido); color: var(--verde-bosque); }
+
+    /* Botón refrescar */
+    .btn-refresh { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radio-sm); background: var(--verde-palido); color: var(--verde-bosque); border: 1px solid var(--verde-suave); font-size: 12px; font-weight: 500; cursor: pointer; transition: all var(--t); font-family: 'DM Sans', sans-serif; }
+    .btn-refresh:hover { background: var(--verde-suave); }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    .btn-refresh.girando .ic-r { animation: girar .7s linear infinite; }
+
+    .contenido { padding: 32px; display: flex; flex-direction: column; gap: 36px; flex: 1; }
+    .seccion { display: none; }
+    .seccion.activa { display: block; }
+    .sec-hdr { margin-bottom: 24px; }
+    .sec-hdr h2 { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; color: var(--verde-bosque); margin-bottom: 6px; }
+    .sec-hdr p  { font-size: 14px; color: var(--gris-medio); }
+    .linea { width: 48px; height: 3px; background: linear-gradient(90deg,var(--verde-claro),var(--tierra)); border-radius: 2px; margin-top: 10px; }
+
+    /* CARDS */
+    .card { background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra); padding: 24px; border: 1px solid var(--gris-borde); transition: transform var(--t), box-shadow var(--t); }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(45,106,79,.16); }
+    .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
+    .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .g2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+
+    /* STAT CARDS */
+    .sc { background: var(--blanco); border-radius: var(--radio); padding: 22px 24px; box-shadow: var(--sombra); border: 1px solid var(--gris-borde); display: flex; align-items: center; gap: 18px; transition: transform var(--t), box-shadow var(--t); }
+    .sc:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(45,106,79,.18); }
+    .sc-ico { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .si-v { background: var(--verde-palido); }
+    .si-t { background: #F5EDD9; }
+    .si-a { background: #E8F4FD; }
+    .si-l { background: #F3EFFE; }
+    .sc-info h3 { font-size: 28px; font-weight: 700; color: var(--verde-bosque); line-height: 1; min-height: 34px; }
+    .sc-info p  { font-size: 13px; color: var(--gris-medio); margin-top: 3px; }
+
+    /* Skeleton */
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .sk { background: linear-gradient(90deg,#e5e7eb 25%,#f3f4f6 50%,#e5e7eb 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; display: inline-block; }
+
+    /* BANNER */
+    .banner { background: linear-gradient(135deg, var(--verde-bosque) 0%, var(--verde-medio) 60%, #52B788 100%); border-radius: var(--radio); padding: 32px 36px; color: var(--blanco); position: relative; overflow: hidden; }
+    .banner::before { content: '🌿'; position: absolute; right: 32px; top: 50%; transform: translateY(-50%); font-size: 80px; opacity: .18; }
+    .banner h2 { font-family:'Fraunces',serif; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+    .banner p  { font-size: 14px; opacity: .85; max-width: 560px; line-height: 1.6; }
+    .pw { display: flex; align-items: center; gap: 16px; margin-top: 20px; }
+    .pw-lbl  { font-size: 13px; opacity: .85; white-space: nowrap; }
+    .pw-bar  { flex: 1; height: 6px; background: rgba(255,255,255,.25); border-radius: 3px; overflow: hidden; }
+    .pw-fill { height: 100%; background: var(--verde-suave); border-radius: 3px; width: 0%; transition: width 1.2s ease; }
+    .pw-pct  { font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+    /* ALERTA */
+    .alerta { background: #FFF8E1; border: 1px solid #F59E0B; border-radius: var(--radio-sm); padding: 14px 18px; font-size: 13px; color: #92400E; line-height: 1.7; margin-bottom: 20px; }
+    .alerta strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .alerta code { background: rgba(0,0,0,.08); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+    .alerta a { color: #92400E; font-weight: 600; }
+
+    /* FORMATOS */
+    .fc { background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--gris-borde); padding: 28px; display: flex; align-items: flex-start; gap: 20px; transition: transform var(--t), box-shadow var(--t); }
+    .fc:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(45,106,79,.18); }
+    .fc-ico { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+    .fc-body h3 { font-family:'Fraunces',serif; font-size: 17px; font-weight: 600; margin-bottom: 5px; }
+    .fc-body p  { font-size: 13px; color: var(--gris-medio); margin-bottom: 16px; line-height: 1.5; }
+
+    /* BOTONES */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: var(--radio-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all var(--t); border: none; }
+    .btn-p { background: var(--verde-medio); color: var(--blanco); }
+    .btn-p:hover { background: var(--verde-bosque); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(45,106,79,.3); }
+    .btn-s { background: var(--verde-palido); color: var(--verde-bosque); border: 1px solid var(--verde-suave); }
+    .btn-s:hover { background: var(--verde-suave); transform: translateY(-1px); }
+    .btn-t { background: var(--tierra); color: var(--blanco); }
+    .btn-t:hover { background: #b5913d; transform: translateY(-1px); }
+
+    /* FORMULARIO */
+    .fg { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+    .fg label { font-size: 13px; font-weight: 500; }
+    .sw { position: relative; }
+    .sw::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--verde-medio); pointer-events: none; }
+    .sw select { width: 100%; padding: 11px 14px; border: 1px solid var(--gris-borde); border-radius: var(--radio-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--crema); appearance: none; cursor: pointer; outline: none; transition: border-color var(--t), box-shadow var(--t); }
+    .sw select:focus { border-color: var(--verde-claro); box-shadow: 0 0 0 3px rgba(116,198,157,.2); }
+    .file-drop { border: 2px dashed var(--verde-suave); border-radius: var(--radio); padding: 32px; text-align: center; background: var(--verde-palido); cursor: pointer; transition: all var(--t); }
+    .file-drop:hover { border-color: var(--verde-medio); background: #c4edda; }
+    .file-drop p    { font-size: 14px; color: var(--verde-bosque); }
+    .file-drop span { font-size: 12px; color: var(--gris-medio); display: block; margin-top: 4px; }
+
+    /* CONTADOR */
+    .cc { background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--gris-borde); overflow: hidden; }
+    .cc-head { padding: 16px 20px; background: linear-gradient(135deg, var(--verde-bosque), var(--verde-medio)); color: var(--blanco); }
+    .cc-head h3 { font-family:'Fraunces',serif; font-size: 16px; font-weight: 600; }
+    .cc-head p  { font-size: 12px; opacity: .75; margin-top: 2px; }
+    .cc-num     { font-family:'Fraunces',serif; font-size: 42px; font-weight: 700; color: var(--blanco); margin-top: 4px; min-height: 50px; }
+    .cc-body    { padding: 20px; }
+    .fb { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .fb-lbl { font-size: 13px; color: var(--gris-texto); width: 100px; flex-shrink: 0; }
+    .bw  { flex: 1; background: var(--gris-borde); border-radius: 20px; height: 8px; overflow: hidden; }
+    .bf  { height: 100%; border-radius: 20px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+    .fn  { font-size: 13px; font-weight: 600; color: var(--verde-bosque); width: 28px; text-align: right; }
+
+    /* TABLA */
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--gris-medio); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--gris-borde); background: var(--crema); }
+    .tbl td { font-size: 13px; padding: 12px; border-bottom: 1px solid var(--gris-borde); }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl tr:hover td { background: var(--verde-palido); }
+
+    /* CHIPS */
+    .chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .ch-v { background: var(--verde-palido); color: var(--verde-bosque); }
+    .ch-t { background: #F5EDD9; color: #8B6914; }
+    .ch-a { background: #E3F2FD; color: #1565C0; }
+
+    /* EQUIPO */
+    .pc { background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--gris-borde); padding: 24px; display: flex; flex-direction: column; gap: 16px; transition: transform var(--t), box-shadow var(--t); }
+    .pc:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(45,106,79,.18); }
+    .av { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family:'Fraunces',serif; font-size: 18px; font-weight: 700; color: var(--blanco); flex-shrink: 0; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 28px; right: 28px; background: var(--verde-bosque); color: var(--blanco); padding: 14px 22px; border-radius: var(--radio-sm); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2); transform: translateY(80px); opacity: 0; transition: all .4s cubic-bezier(.34,1.56,.64,1); z-index: 9999; max-width: 320px; }
+    .toast.vis { transform: translateY(0); opacity: 1; }
+
+    /* HAMBURGER */
+    .ham { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+    .ham span { display: block; width: 22px; height: 2px; background: var(--verde-bosque); border-radius: 2px; }
+    .ovl { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 90; }
+
+    /* ANIMACIONES */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .anm { animation: fadeUp .4s ease both; }
+    .anm:nth-child(1){animation-delay:.05s}.anm:nth-child(2){animation-delay:.12s}.anm:nth-child(3){animation-delay:.19s}.anm:nth-child(4){animation-delay:.26s}
+
+    /* RESPONSIVE */
+    @media(max-width:900px) { .sidebar{transform:translateX(-100%)} .sidebar.abierto{transform:translateX(0)} .main{margin-left:0} .ham{display:flex} .ovl.vis{display:block} .g3,.g4{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:600px) { .contenido{padding:20px} .topbar{padding:14px 20px} .g3,.g4,.g2{grid-template-columns:1fr} .fc{flex-direction:column} }
+  </style>
+</head>
+<body>
+
+<!-- =========================================================
+     ✏️ CONFIGURACIÓN — EDITA AQUÍ
+     Para datos reales necesitas una API Key de Google Drive:
+       1. Ve a https://console.cloud.google.com/
+       2. Crea proyecto → habilita "Google Drive API"
+       3. Crea credencial → "Clave de API" (API Key)
+       4. Pega la clave abajo en GOOGLE_API_KEY
+     Las carpetas de Drive ya están configuradas con tus IDs.
+========================================================= -->
+<script>
+  const CONFIG = {
+    GOOGLE_API_KEY: 'AIzaSyBnQ9ZWjLf1ugnGvqXtFnke0XAeeCUYXwU', // 🔑 API Key configurada
+
+    CARPETA_FORMATOS: '1saSZtkkQMsm7ZdNhJgNU8AxOyA3M__gB',
+
+    personas: [
+      {
+        id:'jhonatan', nombre:'Jhonatan Chindoy', rol:'Dinamizador',
+        color:'#2D6A4F', inicial:'JC',
+        carpetas:{
+          principal:   '1gWTceA2iByLy9vGA8noYw_YVXutXNK7X',
+          informes:    '1-fsACkWEeNSQC1zlnUdCHtNkonchpP5D',
+          anticipos:   '1d4ktqB_AQJePfILjtHxacRKqmT2G9_OR',
+          evidencia:   '1NcQHhDw0cc8iZh3_CI7lEd8puAWCI-rV',
+          relatorias:  '11w4K7rHOqjoJeaU5a1XB5s-VVWl4U58T',
+          solicitudes: '11tmRYcrloUpYTcMAKjVO9IayFag-ftcv'
+        }
+      },
+      {
+        id:'magnolia', nombre:'Magnolia Campo', rol:'Dinamizadora',
+        color:'#40916C', inicial:'MC',
+        carpetas:{
+          principal:   '1U7Iug3B9vg4ETH6suTWtCEm6qt4VtS_H',
+          informes:    '1Ki53hRiGV1Mx481NOiLEPHeCQhOlpSA0',
+          anticipos:   '11V7QbGWSLI0W_dLLPBBBGRBllmwdDVTB',
+          evidencia:   '18MWaXOssY2fyfsfmdEZkwkQjN67BiqN5',
+          relatorias:  '1ODlGiDPLR_RVM-vrbYELS7ev8wAzl-og',
+          solicitudes: '1PqgFSMMbf_T70mkkyjSUB3u-uTyUMiZm'
+        }
+      },
+      {
+        id:'fredy', nombre:'Fredy Pertega', rol:'Dinamizador',
+        color:'#C8A96E', inicial:'FP',
+        carpetas:{
+          principal:   '1VsyvtZ4KdCIxQwzqwM0aEwKbg4OnjEv2',
+          informes:    '1FHHcQeNngXvvu9YajEAL6PgWCXDFYxor',
+          anticipos:   '1qevWVLnUl5I6x3XefdUI-MCvHgGj61VG',
+          evidencia:   '1hUViaYqQgco3-7FgPwY4RDhh3CJNCtR9',
+          relatorias:  '1CpiJM7lFgx-wyLgNz_cAfgaIVMMqUZ-I',
+          solicitudes: '1pRP9rQuwPgrsEfJh87Bgt6k7N956kUiC'
+        }
+      },
+      {
+        id:'edgar', nombre:'Edgar Muelas', rol:'Coordinador',
+        color:'#1565C0', inicial:'EM',
+        carpetas:{
+          principal:   '1mqR85uf_Fjow2U93DH_32W-g9Cbw9fip',
+          informes:    '1e5g-zw9bshz5cWqifxwVrxhSxXHohuf7',
+          anticipos:   '1AUHax6WLap4__URte9JUWUbgXilvbaEL',
+          evidencia:   '14_ni7SPi-dkAVHEwWDi4qlQ2le5z_0ZG',
+          relatorias:  '1VN8boKIC4mnTr_zsPV6SJ5Pnj9EgolaG',
+          solicitudes: '1ZySH8x5Ltj-JNN74jJB-_bkIpV6nM3SR'
+        }
+      }
+    ]
+  };
+
+  const TIPOS = ['informes','solicitudes','relatorias','anticipos','evidencia'];
+  function driveUrl(id){ return `https://drive.google.com/drive/folders/${id}?usp=sharing`; }
+</script>
+
+<div class="ovl" id="ovl" onclick="cerrarSB()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="hoja">🌿</div>
+    <h1>Lenguas Originarias</h1>
+    <p>Panel de Gestión</p>
+  </div>
+  <nav class="sb-nav">
+    <span class="nav-label">Menú principal</span>
+    <button class="nav-item activo" onclick="ir('inicio',this)"><span class="ni">🏠</span> Inicio</button>
+    <button class="nav-item" onclick="ir('descargar',this)"><span class="ni">📥</span> Descargar Formatos</button>
+    <button class="nav-item" onclick="ir('subir',this)"><span class="ni">📤</span> Subir Documentos</button>
+    <button class="nav-item" onclick="ir('contador',this)"><span class="ni">📊</span> Contador de Docs.</button>
+    <button class="nav-item" onclick="ir('equipo',this)"><span class="ni">👥</span> Equipo Dinamizador</button>
+  </nav>
+  <div class="api-status load" id="api-st">
+    <div class="dot gris pulse" id="api-dot"></div>
+    <span id="api-msg">Conectando…</span>
+  </div>
+  <div class="sb-footer">© 2026 Subcomponente<br>Lenguas Originarias</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <button class="ham" onclick="abrirSB()"><span></span><span></span><span></span></button>
+      <span class="topbar-titulo" id="tt">Inicio</span>
+    </div>
+    <div class="topbar-r">
+      <span class="topbar-fecha" id="tf"></span>
+      <button class="btn-refresh" id="btnR" onclick="cargarDrive(true)">
+        <svg class="ic-r" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Actualizar datos
+      </button>
+      <span class="badge badge-v">🌿 Activo</span>
+    </div>
+  </header>
+
+  <div class="contenido">
+
+    <!-- INICIO -->
+    <section class="seccion activa" id="sec-inicio">
+      <div class="banner anm">
+        <h2>Bienvenido al Sistema de Gestión 🌱</h2>
+        <p>Los contadores reflejan los archivos reales subidos a Google Drive. Presiona <strong>Actualizar datos</strong> para sincronizar.</p>
+        <div class="pw">
+          <span class="pw-lbl">Total documentos</span>
+          <div class="pw-bar"><div class="pw-fill" id="pw-fill"></div></div>
+          <span class="pw-pct" id="pw-pct"><span class="sk" style="height:16px;width:50px"></span></span>
+        </div>
+      </div>
+
+      <div class="alerta" id="alerta-api" style="display:none">
+        <strong>⚙️ Paso único de configuración — API Key de Google Drive</strong>
+        Para mostrar contadores reales (cantidad de archivos en Drive) necesitas agregar tu clave de API:<br><br>
+        1. Abre <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> → Crea un proyecto nuevo.<br>
+        2. Ve a <strong>APIs y servicios → Biblioteca</strong> → Busca y habilita <em>"Google Drive API"</em>.<br>
+        3. Ve a <strong>APIs y servicios → Credenciales → + Crear credencial → Clave de API</strong>.<br>
+        4. Copia la clave generada y pégala en el HTML donde dice <code>PEGA_TU_API_KEY_AQUI</code>.<br>
+        5. En "Restricciones de la clave" → Restricción de API → Google Drive API (recomendado).
+      </div>
+
+      <div class="g4">
+        <div class="sc anm"><div class="sc-ico si-v">📄</div><div class="sc-info"><h3 id="st-inf"><span class="sk" style="height:28px;width:40px"></span></h3><p>Informes</p></div></div>
+        <div class="sc anm"><div class="sc-ico si-t">📋</div><div class="sc-info"><h3 id="st-sol"><span class="sk" style="height:28px;width:40px"></span></h3><p>Solicitudes</p></div></div>
+        <div class="sc anm"><div class="sc-ico si-a">📝</div><div class="sc-info"><h3 id="st-rel"><span class="sk" style="height:28px;width:40px"></span></h3><p>Relatorías</p></div></div>
+        <div class="sc anm"><div class="sc-ico si-l">📂</div><div class="sc-info"><h3 id="st-ant"><span class="sk" style="height:28px;width:40px"></span></h3><p>Anticipos</p></div></div>
+      </div>
+
+      <div>
+        <div class="sec-hdr"><h2>Accesos rápidos</h2><div class="linea"></div></div>
+        <div class="g3">
+          <div class="card anm" style="cursor:pointer" onclick="ir('descargar',document.querySelectorAll('.nav-item')[1])">
+            <div style="font-size:32px;margin-bottom:12px">📥</div>
+            <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;color:var(--verde-bosque)">Descargar Formatos</h3>
+            <p style="font-size:13px;color:var(--gris-medio)">Accede a informes, solicitudes y relatorías.</p>
+          </div>
+          <div class="card anm" style="cursor:pointer" onclick="ir('subir',document.querySelectorAll('.nav-item')[2])">
+            <div style="font-size:32px;margin-bottom:12px">📤</div>
+            <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;color:var(--verde-bosque)">Subir Documentos</h3>
+            <p style="font-size:13px;color:var(--gris-medio)">Abre tu carpeta exacta en Drive según tipo.</p>
+          </div>
+          <div class="card anm" style="cursor:pointer" onclick="ir('contador',document.querySelectorAll('.nav-item')[3])">
+            <div style="font-size:32px;margin-bottom:12px">📊</div>
+            <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;color:var(--verde-bosque)">Ver Contadores</h3>
+            <p style="font-size:13px;color:var(--gris-medio)">Datos en tiempo real desde Google Drive.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DESCARGAR FORMATOS -->
+    <section class="seccion" id="sec-descargar">
+      <div class="sec-hdr">
+        <h2>📥 Descargar Formatos</h2>
+        <p>Descarga los formatos oficiales desde Google Drive.</p>
+        <div class="linea"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="fc anm">
+          <div class="fc-ico" style="background:#E8F5E9">📄</div>
+          <div class="fc-body">
+            <h3>Formato de Informe</h3>
+            <p>Documento oficial para el registro y entrega de informes. Diligéncialo y súbelo a tu carpeta.</p>
+            <!-- ✏️ Reemplaza href con el link de Plantilla_Informe.docx (clic derecho → Compartir → Copiar enlace) -->
+            <a class="btn btn-p" href="PENDIENTE_INFORME" target="_blank" id="b-inf">⬇️ Descargar Informe</a>
+          </div>
+        </div>
+        <div class="fc anm">
+          <div class="fc-ico" style="background:#FFF8E1">📋</div>
+          <div class="fc-body">
+            <h3>Formato de Solicitud</h3>
+            <p>Plantilla para solicitudes formales ante el coordinador del subcomponente.</p>
+            <!-- ✏️ Reemplaza href con el link de Plantilla_Solicitud.docx -->
+            <a class="btn btn-t" href="PENDIENTE_SOLICITUD" target="_blank" id="b-sol">⬇️ Descargar Solicitud</a>
+          </div>
+        </div>
+        <div class="fc anm">
+          <div class="fc-ico" style="background:#E3F2FD">📝</div>
+          <div class="fc-body">
+            <h3>Formato de Relatoría</h3>
+            <p>Formato para registrar acuerdos y compromisos de las sesiones realizadas.</p>
+            <!-- ✏️ Reemplaza href con el link de Plantilla_Relatoria.docx -->
+            <a class="btn btn-s" href="PENDIENTE_RELATORIA" target="_blank" id="b-rel">⬇️ Descargar Relatoría</a>
+          </div>
+        </div>
+        <div class="card anm" style="background:var(--verde-palido);border:1px solid var(--verde-suave)">
+          <div style="display:flex;align-items:center;gap:16px">
+            <span style="font-size:32px">📁</span>
+            <div style="flex:1">
+              <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:4px;color:var(--verde-bosque)">Carpeta completa de Formatos Oficiales</h3>
+              <p style="font-size:13px;color:var(--gris-medio)">Accede a todos los formatos en Google Drive.</p>
+            </div>
+            <a class="btn btn-p" href="https://drive.google.com/drive/folders/1saSZtkkQMsm7ZdNhJgNU8AxOyA3M__gB?usp=sharing" target="_blank">📂 Abrir carpeta</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUBIR DOCUMENTOS -->
+    <section class="seccion" id="sec-subir">
+      <div class="sec-hdr">
+        <h2>📤 Subir Documentos</h2>
+        <p>Selecciona tu nombre y el tipo. Se abrirá tu carpeta exacta en Drive.</p>
+        <div class="linea"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start">
+        <div class="card anm">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:20px;color:var(--verde-bosque)">Seleccionar destino</h3>
+          <div class="fg">
+            <label>👤 Tu nombre</label>
+            <div class="sw">
+              <select id="sel-p">
+                <option value="">— Selecciona tu nombre —</option>
+                <option value="jhonatan">Jhonatan Chindoy</option>
+                <option value="magnolia">Magnolia Campo</option>
+                <option value="fredy">Fredy Pertega</option>
+                <option value="edgar">Edgar Muelas</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label>📁 Tipo de documento</label>
+            <div class="sw">
+              <select id="sel-t">
+                <option value="">— Selecciona el tipo —</option>
+                <option value="informes">Informe</option>
+                <option value="solicitudes">Solicitud</option>
+                <option value="relatorias">Relatoría</option>
+                <option value="anticipos">Anticipo</option>
+                <option value="evidencia">Evidencia</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label>📎 Archivo</label>
+            <div class="file-drop" onclick="subirDoc()">
+              <p>🗂️ Haz clic para abrir tu carpeta en Drive</p>
+              <span>Se abrirá la carpeta correcta según tu selección</span>
+            </div>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center;padding:14px" onclick="subirDoc()">📂 Abrir carpeta en Drive</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card anm" style="border-left:4px solid var(--verde-claro)">
+            <h4 style="font-size:14px;font-weight:600;margin-bottom:8px">ℹ️ ¿Cómo subir un documento?</h4>
+            <ol style="font-size:13px;color:var(--gris-medio);line-height:1.9;padding-left:18px">
+              <li>Selecciona tu nombre.</li>
+              <li>Elige el tipo de documento.</li>
+              <li>Haz clic en "Abrir carpeta en Drive".</li>
+              <li>Se abre <strong>tu carpeta exacta</strong> en Drive.</li>
+              <li>Arrastra o usa "+ Nuevo" para subir el archivo.</li>
+            </ol>
+          </div>
+          <div class="card anm" style="background:var(--verde-palido);border:1px solid var(--verde-suave)">
+            <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--verde-bosque)">🔄 Actualizar contadores</h4>
+            <p style="font-size:13px;color:var(--gris-medio);line-height:1.7">Después de subir un archivo, regresa al panel y presiona <strong>Actualizar datos</strong> en la barra superior para ver el nuevo conteo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTADOR -->
+    <section class="seccion" id="sec-contador">
+      <div class="sec-hdr">
+        <h2>📊 Contador de Documentos</h2>
+        <p>Archivos reales en Google Drive. Última actualización: <strong id="ult-act">—</strong></p>
+        <div class="linea"></div>
+      </div>
+      <div class="g3" style="margin-bottom:28px">
+        <div class="cc anm">
+          <div class="cc-head"><h3>📄 Informes</h3><p>Archivos en Drive</p><div class="cc-num" id="cn-inf"><span class="sk" style="height:42px;width:60px"></span></div></div>
+          <div class="cc-body" id="br-inf"></div>
+        </div>
+        <div class="cc anm">
+          <div class="cc-head" style="background:linear-gradient(135deg,#8B6914,#C8A96E)"><h3>📋 Solicitudes</h3><p>Archivos en Drive</p><div class="cc-num" id="cn-sol"><span class="sk" style="height:42px;width:60px"></span></div></div>
+          <div class="cc-body" id="br-sol"></div>
+        </div>
+        <div class="cc anm">
+          <div class="cc-head" style="background:linear-gradient(135deg,#1565C0,#1E88E5)"><h3>📝 Relatorías</h3><p>Archivos en Drive</p><div class="cc-num" id="cn-rel"><span class="sk" style="height:42px;width:60px"></span></div></div>
+          <div class="cc-body" id="br-rel"></div>
+        </div>
+      </div>
+      <div class="card anm">
+        <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:16px;color:var(--verde-bosque)">📋 Resumen completo por dinamizador</h3>
+        <table class="tbl">
+          <thead>
+            <tr><th>Nombre</th><th>Rol</th><th>Informes</th><th>Solicitudes</th><th>Relatorías</th><th>Anticipos</th><th>Evidencias</th><th>Total</th></tr>
+          </thead>
+          <tbody id="tbl-body">
+            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gris-medio)">
+              <span class="sk" style="height:14px;width:220px;display:inline-block"></span>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EQUIPO -->
+    <section class="seccion" id="sec-equipo">
+      <div class="sec-hdr">
+        <h2>👥 Equipo Dinamizador</h2>
+        <p>Integrantes del Subcomponente de Lenguas Originarias con acceso directo a sus carpetas.</p>
+        <div class="linea"></div>
+      </div>
+      <div class="g2" id="grid-eq"></div>
+    </section>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- JAVASCRIPT -->
+<script>
+  /* Estado global */
+  let DATOS = {}; // { jhonatan: { informes:N, solicitudes:N, ... } }
+
+  /* Navegación */
+  const TITULOS = { inicio:'Inicio', descargar:'Descargar Formatos', subir:'Subir Documentos', contador:'Contador de Documentos', equipo:'Equipo Dinamizador' };
+  function ir(id, btn) {
+    document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+    document.getElementById('sec-'+id).classList.add('activa');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+    if(btn) btn.classList.add('activo');
+    document.getElementById('tt').textContent = TITULOS[id]||id;
+    cerrarSB();
+  }
+  function abrirSB()  { document.getElementById('sidebar').classList.add('abierto'); document.getElementById('ovl').classList.add('vis'); }
+  function cerrarSB() { document.getElementById('sidebar').classList.remove('abierto'); document.getElementById('ovl').classList.remove('vis'); }
+
+  /* Toast */
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('vis');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('vis'), 3500);
+  }
+
+  /* Fecha */
+  (function(){
+    const f = new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('tf').textContent = f.charAt(0).toUpperCase()+f.slice(1);
+  })();
+
+  /* Estado sidebar API */
+  function setApi(tipo, msg) {
+    const el=document.getElementById('api-st'), dot=document.getElementById('api-dot'), tx=document.getElementById('api-msg');
+    el.className = 'api-status '+tipo;
+    dot.className = 'dot '+(tipo==='ok'?'verde':tipo==='err'?'rojo':'gris pulse');
+    tx.textContent = msg;
+  }
+
+  /* ===================================================
+     GOOGLE DRIVE API — contar archivos en una carpeta
+     Necesita API Key configurada arriba
+  =================================================== */
+  async function contarCarpeta(folderId) {
+    let total=0, token='';
+    do {
+      const url = `https://www.googleapis.com/drive/v3/files`
+        + `?q='${folderId}'+in+parents+and+trashed%3Dfalse`
+        + `&fields=nextPageToken,files(id)`
+        + `&pageSize=1000`
+        + `&key=${CONFIG.GOOGLE_API_KEY}`
+        + (token ? `&pageToken=${token}` : '');
+      const res = await fetch(url);
+      if(!res.ok) {
+        const err = await res.json().catch(()=>({error:{message:'Error desconocido'}}));
+        throw new Error(err.error?.message || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      total += (data.files||[]).length;
+      token  = data.nextPageToken || '';
+    } while(token);
+    return total;
+  }
+
+  /* Cargar todos los datos desde Drive */
+  async function cargarDrive(manual = false) {
+    const btnR = document.getElementById('btnR');
+    btnR.classList.add('girando');
+    setApi('load', 'Consultando Drive…');
+
+    // Sin API Key → mostrar aviso y ceros
+    if(CONFIG.GOOGLE_API_KEY === 'PEGA_TU_API_KEY_AQUI') {
+      setApi('err', 'API Key no configurada');
+      document.getElementById('alerta-api').style.display = 'block';
+      CONFIG.personas.forEach(p => { DATOS[p.id] = Object.fromEntries(TIPOS.map(t=>[t,0])); });
+      btnR.classList.remove('girando');
+      renderUI();
+      if(manual) toast('⚠️ Configura la API Key para ver datos reales (ver instrucciones en pantalla).');
+      return;
+    }
+
+    document.getElementById('alerta-api').style.display = 'none';
+
+    let errMsg = '';
+    try {
+      // Consultar todas las carpetas en paralelo
+      await Promise.all(CONFIG.personas.map(async p => {
+        const conteos = {};
+        await Promise.all(TIPOS.map(async tipo => {
+          try {
+            conteos[tipo] = await contarCarpeta(p.carpetas[tipo]);
+          } catch(e) {
+            conteos[tipo] = 0;
+            errMsg = e.message;
+          }
+        }));
+        DATOS[p.id] = conteos;
+      }));
+
+      if(errMsg) {
+        setApi('err', 'Error: '+errMsg.substring(0,30));
+        toast('❌ Error Drive: '+errMsg+' — Verifica tu API Key y los permisos de las carpetas.');
+      } else {
+        setApi('ok', 'Drive sincronizado ✓');
+        if(manual) toast('✅ Datos actualizados desde Google Drive');
+      }
+    } catch(e) {
+      setApi('err', 'Sin conexión');
+      toast('❌ Error de conexión con Google Drive.');
+    }
+
+    btnR.classList.remove('girando');
+    renderUI();
+  }
+
+  /* ===================================================
+     Renderizar toda la interfaz con los datos cargados
+  =================================================== */
+  function renderUI() {
+    const ahora = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    const ua = document.getElementById('ult-act');
+    if(ua) ua.textContent = ahora;
+
+    // Totales globales
+    let tInf=0, tSol=0, tRel=0, tAnt=0, tEvi=0;
+    CONFIG.personas.forEach(p => {
+      const d = DATOS[p.id]||{};
+      tInf += d.informes||0; tSol += d.solicitudes||0;
+      tRel += d.relatorias||0; tAnt += d.anticipos||0; tEvi += d.evidencia||0;
+    });
+    const gran = tInf+tSol+tRel+tAnt+tEvi;
+
+    animN('st-inf',tInf); animN('st-sol',tSol); animN('st-rel',tRel); animN('st-ant',tAnt);
+    animN('cn-inf',tInf); animN('cn-sol',tSol); animN('cn-rel',tRel);
+
+    // Barra de progreso
+    setTimeout(() => {
+      document.getElementById('pw-fill').style.width = gran > 0 ? '100%' : '0%';
+      document.getElementById('pw-pct').textContent  = gran + ' documentos en total';
+    }, 300);
+
+    // Barras por persona
+    const mxI = Math.max(1,...CONFIG.personas.map(p=>(DATOS[p.id]||{}).informes||0));
+    const mxS = Math.max(1,...CONFIG.personas.map(p=>(DATOS[p.id]||{}).solicitudes||0));
+    const mxR = Math.max(1,...CONFIG.personas.map(p=>(DATOS[p.id]||{}).relatorias||0));
+
+    document.getElementById('br-inf').innerHTML = CONFIG.personas.map(p=>barra(p,'informes',mxI,'#2D6A4F')).join('');
+    document.getElementById('br-sol').innerHTML = CONFIG.personas.map(p=>barra(p,'solicitudes',mxS,'#C8A96E')).join('');
+    document.getElementById('br-rel').innerHTML = CONFIG.personas.map(p=>barra(p,'relatorias',mxR,'#1565C0')).join('');
+
+    setTimeout(() => {
+      document.querySelectorAll('.bf[data-w]').forEach(b => b.style.width = b.getAttribute('data-w')+'%');
+    }, 150);
+
+    // Tabla resumen
+    document.getElementById('tbl-body').innerHTML = CONFIG.personas.map(p => {
+      const d=DATOS[p.id]||{};
+      const tot=(d.informes||0)+(d.solicitudes||0)+(d.relatorias||0)+(d.anticipos||0)+(d.evidencia||0);
+      return `<tr>
+        <td><strong>${p.nombre}</strong></td>
+        <td><span class="chip ${p.rol==='Coordinador'?'ch-t':'ch-v'}">${p.rol}</span></td>
+        <td style="font-weight:600">${d.informes||0}</td>
+        <td style="font-weight:600">${d.solicitudes||0}</td>
+        <td style="font-weight:600">${d.relatorias||0}</td>
+        <td style="font-weight:600">${d.anticipos||0}</td>
+        <td style="font-weight:600">${d.evidencia||0}</td>
+        <td><strong style="font-size:15px;color:var(--verde-bosque)">${tot}</strong></td>
+      </tr>`;
+    }).join('');
+
+    // Equipo
+    renderEquipo();
+  }
+
+  function barra(p, tipo, maxVal, color) {
+    const val = (DATOS[p.id]||{})[tipo]||0;
+    const pct = Math.round((val/maxVal)*100);
+    return `<div class="fb">
+      <span class="fb-lbl">${p.nombre.split(' ')[0]}</span>
+      <div class="bw"><div class="bf" data-w="${pct}" style="background:${color};width:0%"></div></div>
+      <span class="fn">${val}</span>
+    </div>`;
+  }
+
+  function renderEquipo() {
+    document.getElementById('grid-eq').innerHTML = CONFIG.personas.map(p => {
+      const d=DATOS[p.id]||{};
+      const tot=(d.informes||0)+(d.solicitudes||0)+(d.relatorias||0)+(d.anticipos||0)+(d.evidencia||0);
+      return `<div class="pc anm">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="av" style="background:${p.color}">${p.inicial}</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:600">${p.nombre}</div>
+            <div style="font-size:12px;color:var(--gris-medio);margin-top:2px">${p.rol}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--verde-bosque)">${tot}</div>
+            <div style="font-size:11px;color:var(--gris-medio)">docs. totales</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip ch-v">📄 ${d.informes||0} Informes</span>
+          <span class="chip ch-t">📋 ${d.solicitudes||0} Solicitudes</span>
+          <span class="chip ch-a">📝 ${d.relatorias||0} Relatorías</span>
+          <span class="chip" style="background:#F3EFFE;color:#7C3AED">💰 ${d.anticipos||0} Anticipos</span>
+          <span class="chip" style="background:#FEF9C3;color:#854D0E">🖼️ ${d.evidencia||0} Evidencias</span>
+        </div>
+        <div style="border-top:1px solid var(--gris-borde);padding-top:14px">
+          <p style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-medio);margin-bottom:10px">📁 Carpetas en Drive</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <a href="${driveUrl(p.carpetas.informes)}"    target="_blank" class="btn btn-s" style="justify-content:center;font-size:11px;padding:7px 4px">📄 Informes</a>
+            <a href="${driveUrl(p.carpetas.solicitudes)}" target="_blank" class="btn btn-s" style="justify-content:center;font-size:11px;padding:7px 4px">📋 Solicitudes</a>
+            <a href="${driveUrl(p.carpetas.relatorias)}"  target="_blank" class="btn btn-s" style="justify-content:center;font-size:11px;padding:7px 4px">📝 Relatorías</a>
+            <a href="${driveUrl(p.carpetas.anticipos)}"   target="_blank" class="btn btn-s" style="justify-content:center;font-size:11px;padding:7px 4px">💰 Anticipos</a>
+            <a href="${driveUrl(p.carpetas.evidencia)}"   target="_blank" class="btn btn-s" style="justify-content:center;font-size:11px;padding:7px 4px">🖼️ Evidencia</a>
+            <a href="${driveUrl(p.carpetas.principal)}"   target="_blank" class="btn btn-p" style="justify-content:center;font-size:11px;padding:7px 4px">📂 Ver todo</a>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  /* Subir documentos */
+  function subirDoc() {
+    const pid = document.getElementById('sel-p').value;
+    const tip = document.getElementById('sel-t').value;
+    if(!pid||!tip){ toast('⚠️ Selecciona tu nombre y el tipo de documento.'); return; }
+    const p = CONFIG.personas.find(x=>x.id===pid);
+    toast(`📂 Abriendo carpeta de ${p.nombre} → ${tip}…`);
+    setTimeout(() => window.open(driveUrl(p.carpetas[tip]),'_blank'), 600);
+  }
+
+  /* Botones de descarga pendientes */
+  document.querySelectorAll('a[href^="PENDIENTE_"]').forEach(b => {
+    b.addEventListener('click', e => {
+      e.preventDefault();
+      toast('⚠️ Enlace del .docx pendiente. Compártelo desde la carpeta FORMATOS_OFICIALES en Drive y actualiza el HTML.');
+    });
+  });
+
+  /* Animación de números */
+  function animN(id, hasta, dur=800) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = '';
+    let v=0, paso=hasta/(dur/16);
+    if(hasta===0){ el.textContent='0'; return; }
+    const t = setInterval(()=>{
+      v+=paso; if(v>=hasta){v=hasta;clearInterval(t);}
+      el.textContent=Math.floor(v);
+    },16);
+  }
+
+  /* Inicio */
+  window.addEventListener('load', () => cargarDrive(false));
+</script>
+
+</body>
+</html>
