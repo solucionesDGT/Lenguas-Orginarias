@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subcomponente de Lenguas Originarias</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <div class="ovl" id="ovl" onclick="cerrarSB()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="hoja">🌿</div>
+      <h1>Lenguas Originarias</h1>
+      <p>Panel de Gestión</p>
+    </div>
+    <nav class="sb-nav">
+      <span class="nav-label">Menú principal</span>
+      <button class="nav-item activo" onclick="ir('inicio', this)"><span class="ni">🏠</span> Inicio</button>
+      <button class="nav-item" onclick="ir('descargar', this)"><span class="ni">📥</span> Descargar Formatos</button>
+      <button class="nav-item" onclick="ir('subir', this)"><span class="ni">📤</span> Subir Documentos</button>
+      <button class="nav-item" onclick="ir('contador', this)"><span class="ni">📊</span> Contador de Docs.</button>
+      <button class="nav-item" onclick="ir('equipo', this)"><span class="ni">👥</span> Equipo Dinamizador</button>
+    </nav>
+    <div class="api-status load" id="api-st">
+      <div class="dot gris pulse" id="api-dot"></div>
+      <span id="api-msg">Conectando…</span>
+    </div>
+    <footer class="sb-footer">
+      © 2026 Subcomponente<br>Lenguas Originarias
+    </footer>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:16px">
+        <button class="ham" onclick="abrirSB()"><span></span><span></span><span></span></button>
+        <span class="topbar-titulo" id="tt">Inicio</span>
+      </div>
+      <div class="topbar-r">
+        <span class="topbar-fecha" id="tf"></span>
+        <button class="btn-refresh" id="btnR" onclick="cargarDrive(true)">
+          <svg class="ic-r" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+          </svg>
+          Actualizar datos
+        </button>
+        <span class="badge badge-v">🌿 Activo</span>
+      </div>
+    </header>
+
+    <div class="contenido">
+
+      <section class="seccion activa" id="sec-inicio">
+        <div class="banner anm">
+          <h2>Bienvenido al Sistema de Gestión 🌱</h2>
+          <p>Los contadores reflejan los archivos reales subidos a Google Drive. Presiona <strong>Actualizar datos</strong> para sincronizar.</p>
+          <div class="pw">
+            <span class="pw-lbl">Total documentos</span>
+            <div class="pw-bar"><div class="pw-fill" id="pw-fill"></div></div>
+            <span class="pw-pct" id="pw-pct"><span class="sk" style="height:16px;width:50px"></span></span>
+          </div>
+        </div>
+
+        <div class="alerta" id="alerta-api" style="display:none">
+          <strong>⚙️ Paso único de configuración — API Key de Google Drive</strong>
+          Para mostrar contadores reales (cantidad de archivos en Drive) necesitas agregar tu clave de API:<br><br>
+          1. Abre <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> → Crea un proyecto nuevo.<br>
+          2. Ve a <strong>APIs y servicios → Biblioteca</strong> → Busca y habilita <em>"Google Drive API"</em>.<br>
+          3. Ve a <strong>APIs y servicios → Credenciales → + Crear credencial → Clave de API</strong>.<br>
+          4. Copia la clave generada y pégala en el HTML donde dice <code>PEGA_TU_API_KEY_AQUI</code>.<br>
+          5. En "Restricciones de la clave" → Restricción de API → Google Drive API (recomendado).
+        </div>
+
+        <div class="g4">
+          <div class="sc anm"><div class="sc-ico si-v">📄</div><div class="sc-info"><h3 id="st-inf"><span class="sk" style="height:28px;width:40px"></span></h3><p>Informes</p></div></div>
+          <div class="sc anm"><div class="sc-ico si-t">📋</div><div class="sc-info"><h3 id="st-sol"><span class="sk" style="height:28px;width:40px"></span></h3><p>Solicitudes</p></div></div>
+          <div class="sc anm"><div class="sc-ico si-a">📝</div><div class="sc-info"><h3 id="st-rel"><span class="sk" style="height:28px;width:40px"></span></h3><p>Relatorías</p></div></div>
+          <div class="sc anm"><div class="sc-ico si-l">📂</div><div class="sc-info"><h3 id="st-ant"><span class="sk" style="height:28px;width:40px"></span></h3><p>Anticipos</p></div></div>
+        </div>
+
+        <div>
+          <div class="sec-hdr"><h2>Accesos rápidos</h2><div class="linea"></div></div>
+          <div class="g3">
+            <div class="card anm" style="cursor:pointer" onclick="ir('descargar', document.querySelectorAll('.nav-item')[1])">
+              <div style="font-size:32px;margin-bottom:12px">📥</div>
+              <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;color:var(--verde-bosque)">Descargar Formatos</h3>
+              <p style="font-size:13px;color:var(--gris-medio)">Accede a informes, solicitudes y relatorías.</p>
+            </div>
+            <div class="card anm" style="cursor:pointer" onclick="ir('subir', document.querySelectorAll('.nav-item')[2])">
+              <div style="font-size:32px;margin-bottom:12px">📤</div>
+              <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;color:var(--verde-bosque)">Subir Documentos</h3>
+              <p style="font-size:13px;color:var(--gris-medio)">Abre tu carpeta exacta en Drive según tipo.</p>
+            </div>
+            <div class="card anm" style="cursor:pointer" onclick="ir('contador', document.querySelectorAll('.nav-item')[3])">
+              <div style="font-size:32px;margin-bottom:12px">📊</div>
+              <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;color:var(--verde-bosque)">Ver Contadores</h3>
+              <p style="font-size:13px;color:var(--gris-medio)">Datos en tiempo real desde Google Drive.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="seccion" id="sec-descargar">
+        <div class="sec-hdr">
+          <h2>📥 Descargar Formatos</h2>
+          <p>Descarga los formatos oficiales desde Google Drive.</p>
+          <div class="linea"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div class="fc anm">
+            <div class="fc-ico" style="background:#E8F5E9">📄</div>
+            <div class="fc-body">
+              <h3>Formato de Informe</h3>
+              <p>Documento oficial para el registro y entrega de informes. Diligéncialo y súbelo a tu carpeta.</p>
+              <a class="btn btn-p" href="PENDIENTE_INFORME" target="_blank" id="b-inf">⬇️ Descargar Informe</a>
+            </div>
+          </div>
+          <div class="fc anm">
+            <div class="fc-ico" style="background:#FFF8E1">📋</div>
+            <div class="fc-body">
+              <h3>Formato de Solicitud</h3>
+              <p>Plantilla para solicitudes formales ante el coordinador del subcomponente.</p>
+              <a class="btn btn-t" href="PENDIENTE_SOLICITUD" target="_blank" id="b-sol">⬇️ Descargar Solicitud</a>
+            </div>
+          </div>
+          <div class="fc anm">
+            <div class="fc-ico" style="background:#E3F2FD">📝</div>
+            <div class="fc-body">
+              <h3>Formato de Relatoría</h3>
+              <p>Formato para registrar acuerdos y compromisos de las sesiones realizadas.</p>
+              <a class="btn btn-s" href="PENDIENTE_RELATORIA" target="_blank" id="b-rel">⬇️ Descargar Relatoría</a>
+            </div>
+          </div>
+          <div class="card anm" style="background:var(--verde-palido);border:1px solid var(--verde-suave)">
+            <div style="display:flex;align-items:center;gap:16px">
+              <span style="font-size:32px">📁</span>
+              <div style="flex:1">
+                <h3 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:4px;color:var(--verde-bosque)">Carpeta completa de Formatos Oficiales</h3>
+                <p style="font-size:13px;color:var(--gris-medio)">Accede a todos los formatos en Google Drive.</p>
+              </div>
+              <a class="btn btn-p" href="https://drive.google.com/drive/folders/1saSZtkkQMsm7ZdNhJgNU8AxOyA3M__gB?usp=sharing" target="_blank">📂 Abrir carpeta</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+<!-- SUBIR DOCUMENTOS -->
+    <section class="seccion" id="sec-subir">
+      <div class="sec-hdr">
+        <h2>📤 Subir Documentos</h2>
+        <p>Selecciona tu nombre y el tipo. Se abrirá tu carpeta exacta en Drive.</p>
+        <div class="linea"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start">
+        <div class="card anm">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:20px;color:var(--verde-bosque)">Seleccionar destino</h3>
+          <div class="fg">
+            <label>👤 Tu nombre</label>
+            <div class="sw">
+              <select id="sel-p">
+                <option value="">— Selecciona tu nombre —</option>
+                <option value="jhonatan">Jhonatan Chindoy</option>
+                <option value="magnolia">Magnolia Campo</option>
+                <option value="fredy">Fredy Pertega</option>
+                <option value="edgar">Edgar Muelas</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label>📁 Tipo de documento</label>
+            <div class="sw">
+              <select id="sel-t">
+                <option value="">— Selecciona el tipo —</option>
+                <option value="informes">Informe</option>
+                <option value="solicitudes">Solicitud</option>
+                <option value="relatorias">Relatoría</option>
+                <option value="anticipos">Anticipo</option>
+                <option value="evidencia">Evidencia</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label>📎 Archivo</label>
+            <div class="file-drop" onclick="subirDoc()">
+              <p>🗂️ Haz clic para abrir tu carpeta en Drive</p>
+              <span>Se abrirá la carpeta correcta según tu selección</span>
+            </div>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center;padding:14px" onclick="subirDoc()">📂 Abrir carpeta en Drive</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card anm" style="border-left:4px solid var(--verde-claro)">
+            <h4 style="font-size:14px;font-weight:600;margin-bottom:8px">ℹ️ ¿Cómo subir un documento?</h4>
+            <ol style="font-size:13px;color:var(--gris-medio);line-height:1.9;padding-left:18px">
+              <li>Selecciona tu nombre.</li>
+              <li>Elige el tipo de documento.</li>
+              <li>Haz clic en "Abrir carpeta en Drive".</li>
+              <li>Se abre <strong>tu carpeta exacta</strong> en Drive.</li>
+              <li>Arrastra o usa "+ Nuevo" para subir el archivo.</li>
+            </ol>
+          </div>
+          <div class="card anm" style="background:var(--verde-palido);border:1px solid var(--verde-suave)">
+            <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--verde-bosque)">🔄 Actualizar contadores</h4>
+            <p style="font-size:13px;color:var(--gris-medio);line-height:1.7">Después de subir un archivo, regresa al panel y presiona <strong>Actualizar datos</strong> en la barra superior para ver el nuevo conteo.</p>
+          </div>
+        </div>
+      </div>
+        <!-- ============================================================
+             MÓDULO: Control de Ejecución Presupuestal 2026
+        ============================================================ -->
+        <div class="sec-hdr" style="margin-top:40px">
+          <h2>💰 Control de Ejecución Presupuestal 2026</h2>
+          <p>Registra los gastos ejecutados por pueblo, proceso y rubro, y adjunta la evidencia.</p>
+          <div class="linea"></div>
+        </div>
+
+        <div class="g4" style="margin-bottom:28px">
+          <div class="sc anm">
+            <div class="sc-ico si-v">💵</div>
+            <div class="sc-info"><h3 id="pp-total">$0</h3><p>Total</p></div>
+          </div>
+          <div class="sc anm">
+            <div class="sc-ico si-t">📉</div>
+            <div class="sc-info"><h3 id="pp-gastado">$0</h3><p>Gastado</p></div>
+          </div>
+          <div class="sc anm">
+            <div class="sc-ico si-a">💰</div>
+            <div class="sc-info"><h3 id="pp-disponible">$0</h3><p>Disponible</p></div>
+          </div>
+          <div class="sc anm">
+            <div class="sc-ico si-l">📊</div>
+            <div class="sc-info"><h3 id="pp-porcentaje">0%</h3><p>Ejecutado</p></div>
+          </div>
+        </div>
+
+       <div class="card anm">
+  <h3 class="topbar-titulo" style="font-size: 18px; margin-bottom: var(--space-2);">Registrar nuevo gasto</h3>
+  <div class="linea" style="margin-top: -10px; margin-bottom: var(--space-3);"></div>
+
+  <div class="g3">
+
+    <div class="fg">
+      <label for="pp-lenori">🔖 Lenori</label>
+      <input type="text" id="pp-lenori" placeholder="Ingrese Lenori">
+    </div>
+
+    <div class="fg">
+      <label for="pp-pueblo">🏘️ Pueblo</label>
+      <div class="sw">
+        <select id="pp-pueblo"></select>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label for="pp-proceso">🧭 Proceso / Actividad</label>
+      <div class="sw">
+        <select id="pp-proceso" disabled></select>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label for="pp-categoria">🏷️ Categoría MEN</label>
+      <div class="sw">
+        <select id="pp-categoria" disabled></select>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label for="pp-descripcion">📝 Descripción</label>
+      <div class="sw">
+        <select id="pp-descripcion" disabled></select>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label for="pp-monto">💲 Monto Asignado</label>
+      <input type="text" id="pp-monto" readonly placeholder="$ 0">
+    </div>
+
+    <div class="fg">
+      <label for="pp-gasto">💸 Valor del gasto</label>
+      <input type="text" id="pp-gasto" placeholder="0">
+    </div>
+
+    <div class="fg">
+      <label for="pp-fecha">📅 Fecha</label>
+      <input type="date" id="pp-fecha">
+    </div>
+
+    <div class="fg">
+      <label for="pp-responsable">👤 Responsable</label>
+      <div class="sw">
+        <select id="pp-responsable">
+          <option value="">— Selecciona tu nombre —</option>
+          <option value="jhonatan">Jhonatan Chindoy</option>
+          <option value="magnolia">Magnolia Campo</option>
+          <option value="fredy">Fredy Pertega</option>
+          <option value="edgar">Edgar Muelas</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="grid-column: 1 / -1; margin-top: var(--space-1);">
+      <button class="btn btn-p" style="width: 100%; justify-content: center; padding: 13px;" onclick="ppGuardar()">
+        ✅ Registrar Gasto
+      </button>
+    </div>
+
+  </div>
+</div>
+      </section>
+
+      <section class="seccion" id="sec-contador">
+        <div class="sec-hdr">
+          <h2>📊 Contador de Documentos</h2>
+          <p>Archivos reales en Google Drive. Última actualización: <strong id="ult-act">—</strong></p>
+          <div class="linea"></div>
+        </div>
+        <div class="g3" style="margin-bottom:28px">
+          <div class="cc anm">
+            <div class="cc-head"><h3>📄 Informes</h3><p>Archivos en Drive</p><div class="cc-num" id="cn-inf"><span class="sk" style="height:42px;width:60px"></span></div></div>
+            <div class="cc-body" id="br-inf"></div>
+          </div>
+          <div class="cc anm">
+            <div class="cc-head" style="background:linear-gradient(135deg,#8B6914,#C8A96E)"><h3>📋 Solicitudes</h3><p>Archivos en Drive</p><div class="cc-num" id="cn-sol"><span class="sk" style="height:42px;width:60px"></span></div></div>
+            <div class="cc-body" id="br-sol"></div>
+          </div>
+          <div class="cc anm">
+            <div class="cc-head" style="background:linear-gradient(135deg,#1565C0,#1E88E5)"><h3>📝 Relatorías</h3><p>Archivos en Drive</p><div class="cc-num" id="cn-rel"><span class="sk" style="height:42px;width:60px"></span></div></div>
+            <div class="cc-body" id="br-rel"></div>
+          </div>
+        </div>
+        <div class="card anm">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:16px;color:var(--verde-bosque)">📋 Resumen completo por dinamizador</h3>
+          <table class="tbl">
+            <thead>
+              <tr><th>Nombre</th><th>Rol</th><th>Informes</th><th>Solicitudes</th><th>Relatorías</th><th>Anticipos</th><th>Evidencias</th><th>Total</th></tr>
+            </thead>
+            <tbody id="tbl-body">
+              <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gris-medio)">
+                <span class="sk" style="height:14px;width:220px;display:inline-block"></span>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card anm">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:16px;color:var(--verde-bosque)">📋 Historial de gastos registrados</h3>
+          <table class="tbl">
+            <thead>
+              <tr><th>Fecha</th><th>Lenori</th><th>Proceso</th><th>Descripción</th><th>Gasto</th><th>Saldo</th></tr>
+            </thead>
+            <tbody id="pp-tabla">
+              <tr id="pp-fila-vacia">
+                <td colspan="6" style="text-align:center;padding:24px;color:var(--gris-medio);font-style:italic">Aún no se han registrado gastos</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="seccion" id="sec-equipo">
+        <div class="sec-hdr">
+          <h2>👥 Equipo Dinamizador</h2>
+          <p>Integrantes del Subcomponente de Lenguas Originarias con acceso directo a sus carpetas.</p>
+          <div class="linea"></div>
+        </div>
+        <div class="g2" id="grid-eq"></div>
+      </section>
+
+    </div>
+  </main>
+
+ <div id="toast-alerta" class="toast"></div>
+
+  <script src="js/zones.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/presupuesto.js"></script>
+</body>
+</html>
